@@ -93,5 +93,6 @@ int main(){
 
     leaveHome()
 
-    deliverFood({{2, 2}, {1, 2}, {0, 1}})
+    //test case
+    deliverFood({{2, 2}, {1, 2}, {0, 1}});
 }

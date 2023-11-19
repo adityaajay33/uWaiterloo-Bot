@@ -166,6 +166,68 @@ void driveHome()
 
 }
 
+//bubble sort algorithm
+//@param -- array and size of array
+void bubbleSort(int arr[][2], int size) {
+    int i, j, temp;
+
+    for (i = 0; i < size - 1; i++) {
+        for (j = 0; j < size - i - 1; j++) {
+            // Compare adjacent elements
+            if (arr[j][1] > arr[j + 1][1]) {
+                // Swap them if they are in the wrong order
+                temp = arr[j];
+                arr[j] = arr[j + 1];
+                arr[j + 1] = temp;
+            }
+        }
+    }
+}
+
+//collects bills from designated tables when prompted. 
+//@param -- table_coord -- array of table coordinates
+void billCollection(int table_coord[][2]){
+	leaveKitchen();
+
+	int size = sizeof(table_coord);
+
+	//creates a 2d array which looks like [[index in table_coord, [sum of x and y coords]]
+	int sizeLocations[size][2];
+
+	//populates the array with the index and the sum of x and y coord
+	for(int count=0; count < (size - 1); count++){
+		sizeLocations[count][0] = count;
+		sizeLocations[count][1] = (table_coord[count][0] + table_coord[count][1]);
+	}
+
+	//bubble sort the array based on the sum of x and y coord
+	bubbleSort(sizeLocations, size);
+
+	//initialx and initial y is necessary since the movement does not always start at (0,0).
+	int initialx = 0;
+	int initialy = 0;
+
+	//runs through the table_coord array
+	for(int start = 0; start<(size-1); start++){
+
+		//travels the distance between the target and the initial pos
+		for (int count = 0; count < (table_coord[sizeLocations[start]][0]) - initialx; count++) {
+			driveForward(STANDARD_M_POWER);
+		}
+		turn(90);
+		for (int count = 0; count < (table_coord[sizeLocations[start]][1]) - initialy; count++) {
+			driveForward(STANDARD_M_POWER);
+		}
+
+		driveToTable(STANDARD_M_POWER);
+
+		initialx = table_coord[sizeLocations[start]][0];
+		initialy = table_coord[sizeLocations[start]][1];
+	}
+
+	
+}
+
 
 //MAIN PROGRAM
 task main()
