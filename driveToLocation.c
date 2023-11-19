@@ -106,7 +106,11 @@ void turn(int angle)
  	motor[motorA] = motor[motorC] = 0;
 }
 
-// leaves the kitchen to get to the top left-most corner of the restaurant (UNTESTED)
+/*
+ * leaveKitchen()
+ *
+ * Moves the robot from the kitchen area to the start of the restaurant
+ */
 void leaveKitchen()
 {
 	turn(180);
@@ -116,7 +120,14 @@ void leaveKitchen()
 
 }
 
-//drives forward to nearest table adjacent node (UNTESTED)
+/*
+ * driveForward()
+ *
+ * Drives the robot forwards and turns towards to nearest table so that it
+ * is ready to drop off the plate
+ *
+ * @param motor_power The motor power that the robot moves at.
+ */
 void driveToTable (int motor_power)
 {
 	motor[motorA] = motor[motorC] = motor_power;
@@ -126,21 +137,26 @@ void driveToTable (int motor_power)
 	motor[motorA] = motor[motorC] = 0;
 
 	turn(90);
-
+	
 	motor[motorA] = motor[motorC] = motor_power;
-
+	
 	while (SensorValue[S3] > 6) {}
-
+	
 	motor[motorA] = motor[motorC] = 0;
 }
 
+/*
+ * driveToLocation()
+ *
+ * Drives the robot to the actual given location of the table
+ * location with various helper functions.
+ *
+ * @param target The x and y coordinate of the table in the restaurant grid
+ */
 //drives to the actual table location from start(UNTESTED)
-void driveToLocation (int table_num)
+void driveToLocation (Location &target)
 {
 	leaveKitchen();
-
-	Location target;
-	getDriveLocation(table_num, target);
 
 	for (int count = 0; count < (target.row) - 1; count++) {
 		driveForward(STANDARD_M_POWER);
@@ -154,7 +170,7 @@ void driveToLocation (int table_num)
 }
 
 //returns back to home base (UNFINISHED)
-void driveHome()
+void driveHome(Location &target)
 {
 	for (int count = 0; count < target.col - 1; count++) {
 		driveForward(STANDARD_M_POWER);
@@ -163,16 +179,22 @@ void driveHome()
 	for (int count = 0; count < target.row - 1; count++) {
 		driveForward(STANDARD_M_POWER);
 	}
-
+	
 }
 
 
 //MAIN PROGRAM
+
 task main()
 {
 	configureAllSensors();
-
+	
+	Location target;
+	int table_num = 4;
+	getDriveLocation(table_num, target);
+	
 	//testing area
-	driveToLocation(4);
-	//driveHome();
+	driveToLocation(target);
+	//sayan's deliver food function
+	driveHome(target);
 }
