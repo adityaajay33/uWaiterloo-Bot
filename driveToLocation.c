@@ -7,8 +7,8 @@ const int RESTAURANT_HEIGHT = 3;
 const int RESTAURANT_WIDTH = 3;
 const int STANDARD_M_POWER = 50;
 const int table_locations[RESTAURANT_HEIGHT][RESTAURANT_WIDTH] = {{1,2,3},
-																																	{4,5,6},
-																																	{7,8,9}};
+								  {4,5,6},
+								  {7,8,9}};
 
 //STRUCTURES
 typedef struct
