@@ -1,5 +1,10 @@
 /*
-DriveToLocation
+driveToLocation.c
+
+Program to drive the uWaiterlooBot to a desired location in 
+the restaurant.
+
+Written by Brian Zhang
 */
 
 //CONSTANTS
@@ -7,8 +12,8 @@ const int RESTAURANT_HEIGHT = 3;
 const int RESTAURANT_WIDTH = 3;
 const int STANDARD_M_POWER = 50;
 const int table_locations[RESTAURANT_HEIGHT][RESTAURANT_WIDTH] = {{1,2,3},
-								  {4,5,6},
-								  {7,8,9}};
+																																	{4,5,6},
+																																	{7,8,9}};
 
 //STRUCTURES
 typedef struct
@@ -21,6 +26,7 @@ typedef struct
 
 /*
  * configureAllSensors()
+ *
  * Configures all sensors for the robot.
  */
 void configureAllSensors(){
@@ -67,6 +73,20 @@ void getDriveLocation(int table_num, Location &target)
 }
 
 /*
+ * setMotors()
+ *
+ * Sets the speeds for motor A and motor C
+ *
+ * @param motor_power_A The power set for motor A
+ * @param motor_power_C The power set for motor C
+ */
+void setMotors(int motor_power_A, int motor_power_C)
+{
+	motor[motorA] = motor_power_A;
+	motor[motorC] = motor_power_C;
+}
+
+/*
  * driveForward()
  *
  * Drives the robot forward until the next turning point which is
@@ -94,16 +114,14 @@ void turn(int angle)
 	SensorValue[S4] = 0;
 
 	if (angle>0){
-		motor[motorA] = -25;
-		motor[motorC] = 25;
+		setMotors(-25,25);
 	}else{
-		motor[motorA] = 25;
-		motor[motorC] = -25;
+		setMotors(25,-25);
 	}
 
 	while (abs(SensorValue[S4])<abs(angle)) {}
 
- 	motor[motorA] = motor[motorC] = 0;
+ 	setMotors(0,0);
 }
 
 /*
@@ -130,19 +148,19 @@ void leaveKitchen()
  */
 void driveToTable (int motor_power)
 {
-	motor[motorA] = motor[motorC] = motor_power;
+	setMotors(motor_power, motor_power);
 
 	while (SensorValue[S3] != (int)(colorYellow)) {}
 
-	motor[motorA] = motor[motorC] = 0;
+	setMotors(0,0);
 
 	turn(90);
 	
-	motor[motorA] = motor[motorC] = motor_power;
+	setMotors(motor_power, motor_power);
 	
 	while (SensorValue[S3] > 6) {}
 	
-	motor[motorA] = motor[motorC] = 0;
+	setMotors(0,0);
 }
 
 /*
@@ -153,7 +171,6 @@ void driveToTable (int motor_power)
  *
  * @param target The x and y coordinate of the table in the restaurant grid
  */
-//drives to the actual table location from start(UNTESTED)
 void driveToLocation (Location &target)
 {
 	leaveKitchen();
@@ -169,7 +186,14 @@ void driveToLocation (Location &target)
 	driveToTable(STANDARD_M_POWER);
 }
 
-//returns back to home base (UNFINISHED)
+/*
+ * driveHome()
+ *
+ * Returns the robot home back to the kitchen after it has completed
+ * delivering the food or bill.
+ *
+ * @param target The x and y coordinate of the table in the restaurant grid
+ */
 void driveHome(Location &target)
 {
 	for (int count = 0; count < target.col - 1; count++) {
