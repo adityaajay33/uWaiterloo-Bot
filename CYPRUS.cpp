@@ -13,7 +13,7 @@ const int STANDARD_M_POWER = 50;
 const int NUM_X_POS = 50;
 const int NUM_Y_POS = 50;
 const int table_locations[RESTAURANT_HEIGHT][RESTAURANT_WIDTH] = {{1,2,3},
-																																	{4,5,6}};
+								  {4,5,6}};
 const float TAX = 1.13;
 
 //******************ARRAYS******************//
@@ -26,7 +26,7 @@ typedef struct
 {
 	int row, col;
 
-}Location;
+} Location;
 
 
 //******************FUNCTIONS******************//
@@ -38,18 +38,18 @@ typedef struct
  */
 void configureAllSensors()
 {
-  SensorType[S1] = sensorEV3_Color;
+	SensorType[S1] = sensorEV3_Color;
 	wait1Msec(50);
 	SensorMode[S1] = modeEV3Color_Color;
-  wait1Msec(50);
-  SensorType[S2] = sensorEV3_Color;
+	wait1Msec(50);
+	SensorType[S2] = sensorEV3_Color;
 	wait1Msec(50);
 	SensorMode[S2] = modeEV3Color_Color;
-  wait1Msec(50);
-  SensorType[S3] = sensorEV3_Ultrasonic;
-  wait1Msec(50);
-
-  SensorType[S4] = sensorEV3_Gyro;
+	wait1Msec(50);
+	SensorType[S3] = sensorEV3_Ultrasonic;
+	wait1Msec(50);
+	
+	SensorType[S4] = sensorEV3_Gyro;
 	wait1Msec(50);
 	SensorMode[S4] = modeEV3Gyro_Calibration;
 	wait1Msec(100);
@@ -145,7 +145,7 @@ void turn(int angle)
 
 	if (angle>0){
 		setMotors(25,-25);
-	}else{
+	} else{
 		setMotors(-25,25);
 	}
 
