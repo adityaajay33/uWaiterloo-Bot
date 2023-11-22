@@ -13,7 +13,7 @@ const int STANDARD_M_POWER = 50;
 const int NUM_X_POS = 50;
 const int NUM_Y_POS = 50;
 const int table_locations[RESTAURANT_HEIGHT][RESTAURANT_WIDTH] = {{1,2,3},
-								  {4,5,6}};
+																																	{4,5,6}};
 const float TAX = 1.13;
 
 //******************ARRAYS******************//
@@ -25,8 +25,9 @@ float bill[RESTAURANT_HEIGHT*RESTAURANT_WIDTH] = {0,0,0,0,0,0};
 typedef struct
 {
 	int row, col;
-
-} Location;
+	int rows_moved, cols_moved;
+	
+}Location;
 
 
 //******************FUNCTIONS******************//
@@ -38,18 +39,18 @@ typedef struct
  */
 void configureAllSensors()
 {
-	SensorType[S1] = sensorEV3_Color;
+  SensorType[S1] = sensorEV3_Color;
 	wait1Msec(50);
 	SensorMode[S1] = modeEV3Color_Color;
-	wait1Msec(50);
-	SensorType[S2] = sensorEV3_Color;
+  wait1Msec(50);
+  SensorType[S2] = sensorEV3_Color;
 	wait1Msec(50);
 	SensorMode[S2] = modeEV3Color_Color;
-	wait1Msec(50);
-	SensorType[S3] = sensorEV3_Ultrasonic;
-	wait1Msec(50);
-	
-	SensorType[S4] = sensorEV3_Gyro;
+  wait1Msec(50);
+  SensorType[S3] = sensorEV3_Ultrasonic;
+  wait1Msec(50);
+
+  SensorType[S4] = sensorEV3_Gyro;
 	wait1Msec(50);
 	SensorMode[S4] = modeEV3Gyro_Calibration;
 	wait1Msec(100);
@@ -72,6 +73,7 @@ void setMotors(int motor_power_A, int motor_power_C)
 	motor[motorC] = -motor_power_C;
 }
 
+//comment later
 void followPath()
 {
 	setMotors(0,0);
@@ -111,6 +113,7 @@ void followPath()
 	setMotors(0,0);
 }
 
+//comment later
 bool driveForward(int motor_power)
 {
 	setMotors(motor_power, motor_power);
@@ -121,9 +124,9 @@ bool driveForward(int motor_power)
 		if ((SensorValue[S2] != (int)colorBlack) && (SensorValue[S2] != (int)colorRed)) {
 			followPath();
 			setMotors(motor_power, motor_power);
-			wait1Msec(100);
+			wait1Msec(300);
 		}
-		if (SensorValue[S3] < 10) {
+		if (SensorValue[S3] <= 10) {
 			setMotors(0,0);
 			return false;
 		}
@@ -144,9 +147,9 @@ void turn(int angle)
 	resetGyro(S4);
 
 	if (angle>0){
-		setMotors(25,-25);
-	} else{
-		setMotors(-25,25);
+		setMotors(10,-10);
+	}else{
+		setMotors(-10,10);
 	}
 
 	while (abs(SensorValue[S4])<abs(angle)) {}
@@ -185,6 +188,7 @@ void getDriveLocation(int table_num, Location &target)
  *
  * @param motor_power The motor power that the robot moves at.
  */
+//later change to drive to the table (a certain distance away)
 void driveToTable (int motor_power)
 {
 	setMotors(motor_power, motor_power);
@@ -194,10 +198,6 @@ void driveToTable (int motor_power)
 	setMotors(0,0);
 
 	turn(-90);
-
-	setMotors(motor_power, motor_power);
-
-	wait1Msec(400);
 
 	setMotors(0,0);
 }
@@ -224,21 +224,33 @@ void leaveKitchen()
  *
  * @param target The x and y coordinate of the table in the restaurant grid
  */
-void driveToLocation (Location &target)
+bool driveToLocation (Location &target)
 {
-	//leaveKitchen();
+	leaveKitchen(); 
 
+	bool completed = true;
 	for (int count = 0; count < (target.row); count++) {
-		driveForward(STANDARD_M_POWER);
+		completed = driveForward(STANDARD_M_POWER);
+		target.rows_moved++;
+		if (!completed) {
+			return false;
+		}
 	}
+	
 	setMotors(STANDARD_M_POWER,STANDARD_M_POWER);
 	wait1Msec(300);
 	turn(90);
-	for (int count = 0; count < (target.col); count++) {
-		driveForward(STANDARD_M_POWER);
+	
+	for (int count = 0; count < (target.col)*2; count++) {
+		completed = driveForward(STANDARD_M_POWER);
+		target.cols_moved++;
+		if (!completed) {
+			return false;
+		}
 	}
 
 	driveToTable(STANDARD_M_POWER);
+	return true;
 }
 
 /*
@@ -388,7 +400,7 @@ void collectBills() {
 //*****************MAIN PROGRAM******************//
 //TODO:
 //Integrate bill collection system
-//Be able to return home from any point.
+//Do all laters.
 
 task main(){
 	configureAllSensors();
@@ -428,10 +440,13 @@ task main(){
 			//get to table
 			Location target;
 			getDriveLocation(table_num, target);
-			driveToLocation(target);
+			
+			bool completed_travel = true;
+			completed_travel = driveToLocation(target);
 
-
-			//check for obstacles along the way
+			if (!completed_travel) {
+				driveHome(target);
+			}
 
 			//deliver food or bill
 			if (deliver_food) {
@@ -441,13 +456,17 @@ task main(){
 				getPayment(table_num);
 			}
 
-			//driveHome(target);
+			driveHome(target);
 		}
 	}
 
+	
 	//shut down procedure
 	if (!billsEmpty()) {
 		displayString(3, "PLEEEEEAAAAASE PAY YOUR BILLS"); //insert bill collection system here
+		// new idea:
+		// how about we just go from table to table, skipping if the table is in line
+		
 		wait1Msec(2000);
 		//activate bill payment procedure
 	} else {
