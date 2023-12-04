@@ -1,6 +1,7 @@
 /******************************************************************
-CYPRUS_CLEANED.c
+CYPRUS.c
 Main Program for the WaiterlooBot
+Ver 4.1
 
 Written by: Aditya Ajay, Andrew Chai, Brian Zhang, and Sayan Saha
 ******************************************************************/
@@ -16,19 +17,19 @@ const int table_locations[RESTAURANT_HEIGHT][RESTAURANT_WIDTH] = {{1,2,3},
 								  {4,5,6}};
 const float TAX = 1.13;
 
-//******************ARRAYS******************//
-
-float bill[RESTAURANT_HEIGHT*RESTAURANT_WIDTH] = {0,0,0,0,0,0};
-
 //******************STRUCTURES******************//
 
 typedef struct
 {
 	int row, col;
 	int rows_moved, cols_moved;
+	int distance;
 
 }Location;
 
+//******************ARRAYS******************//
+
+float bill[RESTAURANT_HEIGHT*RESTAURANT_WIDTH] = {0,0,0,0,0,0};
 
 //******************FUNCTIONS******************//
 
@@ -77,7 +78,7 @@ void setMotors(int motor_power_A, int motor_power_C)
  * followPath()
  *
  * Rocks the robot back and forth to try and find the black line.
- * Does an initially small sweep, then if no line is found, does a 
+ * Does an initially small sweep, then if no line is found, does a
  * larger sweep.
  *
  */
@@ -87,38 +88,13 @@ void followPath()
 	const int SWEEP_SPEED = 10;
 
 	bool found_line = false;
-	const int TIME = 700;
-
-	//small check
-	time1[T1] = 0;
-	setMotors(SWEEP_SPEED, -SWEEP_SPEED);
-	while(time1[T1] < TIME/2 && !found_line){
-		if ((SensorValue[S2] == (int)colorBlack) || (SensorValue[S2] == (int)colorRed)) {
-			found_line = true;
-		}
-	}
-
-	time1[T1] = 0;
-	setMotors(-SWEEP_SPEED, SWEEP_SPEED);
-	while(time1[T1] < TIME && !found_line){
-		if ((SensorValue[S2] == (int)colorBlack) || (SensorValue[S2] == (int)colorRed)) {
-			found_line = true;
-		}
-	}
-
-	time1[T1] = 0;
-	setMotors(SWEEP_SPEED, -SWEEP_SPEED);
-	while(time1[T1] < TIME/2 && !found_line){
-		if ((SensorValue[S2] == (int)colorBlack) || (SensorValue[S2] == (int)colorRed)) {
-			found_line = true;
-		}
-	}
+	int time = 400;
 
 	//bigger sweep
 	while (SensorValue[S2] != (int)colorBlack && !found_line) {
 		time1[T1] = 0;
 		setMotors(SWEEP_SPEED, -SWEEP_SPEED);
-		while(time1[T1] < (TIME) && !found_line){
+		while(time1[T1] < (time) && !found_line){
 			if ((SensorValue[S2] == (int)colorBlack) || (SensorValue[S2] == (int)colorRed)) {
 				found_line = true;
 			}
@@ -126,7 +102,7 @@ void followPath()
 
 		time1[T1] = 0;
 		setMotors(-SWEEP_SPEED, SWEEP_SPEED);
-		while(time1[T1] < 2*TIME && !found_line){
+		while(time1[T1] < 2*time && !found_line){
 			if ((SensorValue[S2] == (int)colorBlack) || (SensorValue[S2] == (int)colorRed)) {
 				found_line = true;
 			}
@@ -134,11 +110,12 @@ void followPath()
 
 		time1[T1] = 0;
 		setMotors(SWEEP_SPEED, -SWEEP_SPEED);
-		while(time1[T1] < (TIME) && !found_line){
+		while(time1[T1] < (time) && !found_line){
 			if ((SensorValue[S2] == (int)colorBlack) || (SensorValue[S2] == (int)colorRed)) {
 				found_line = true;
 			}
 		}
+		time += 200;
 	}
 }
 
@@ -161,7 +138,7 @@ bool driveForward()
 			setMotors(STANDARD_M_POWER, STANDARD_M_POWER);
 			wait1Msec(100);
 		}
-		if (SensorValue[S3] <= 10) {
+		if (SensorValue[S3] <= 6) {
 			setMotors(0,0);
 			return false;
 		}
@@ -225,6 +202,8 @@ void leaveKitchen()
 {
 	turn(180);
 	driveForward();
+	setMotors(STANDARD_M_POWER,STANDARD_M_POWER);
+	wait1Msec(200);
 	turn(90);
 	driveForward();
 
@@ -256,14 +235,18 @@ bool driveToLocation (Location &target)
 	turn(90);
 
 	for (int count = 0; count < (target.col)*2; count++) {
-		completed = driveForward();
 		target.cols_moved++;
+		completed = driveForward();
 		if (!completed) {
 			return false;
 		}
 	}
 
-	driveForward();
+	completed = driveForward();
+	target.cols_moved++;
+	if (!completed) {
+			return false;
+	}
 	wait1Msec(1000);
 	turn(-90);
 	return true;
@@ -278,16 +261,21 @@ bool driveToLocation (Location &target)
  * @param target The x and y coordinate of the table in the restaurant grid
  */
 void driveHome(Location &target) {
-	displayString(3, "%d", target.cols_moved);
-	for (int count = 0; count < target.cols_moved; count++) {
+	for (int count = 1; count < target.cols_moved; count++) {
 		driveForward();
 	}
-	turn(-90);
+	if (target.cols_moved>1)
+		turn(-90);
 	for (int count = 0; count < target.rows_moved; count++) {
 		driveForward();
 	}
 
+	setMotors(STANDARD_M_POWER,STANDARD_M_POWER);
+	wait1Msec(300);
+
 	turn(-90);
+
+
 	driveForward();
 
 }
@@ -327,7 +315,7 @@ void clearScreen() {
 int tableChoice()
 {
 	clearScreen();
-	displayBigStringAt(NUM_X_POS-20, NUM_Y_POS+30, "TABLE NUMBER:" );
+	displayBigStringAt(NUM_X_POS-35, NUM_Y_POS+30, "TABLE NUMBER:" );
 	int table_num = 1;
 	while(!getButtonPress(buttonEnter)) {
 		if (getButtonPress(buttonUp) && table_num < 6) {
@@ -338,7 +326,7 @@ int tableChoice()
 			table_num--;
 			wait1Msec(300);
 		}
-		displayBigStringAt(NUM_X_POS, NUM_Y_POS, "%d", table_num);
+		displayBigStringAt(NUM_X_POS+25, NUM_Y_POS, "%d", table_num);
 	}
 	clearScreen();
 	return table_num;
@@ -347,7 +335,7 @@ int tableChoice()
 /*
  * moveClaw()
  *
- * Opens or closes the robot claw. 
+ * Opens or closes the robot claw.
  *
  * @param open True for open, false for close.
  */
@@ -426,7 +414,6 @@ void getPayment(int table_num) {
 void scanPlate (int table_num) {
 	if (SensorValue[S1] == (int)colorBlue) {
 		bill[table_num-1] += 8;
-		displayString(10, "%d", bill[table_num-1]);
 	} else if (SensorValue[S1] == (int)colorYellow) {
 		bill[table_num-1] += 12;
 	} else if (SensorValue[S1] == (int)colorRed) {
@@ -437,7 +424,8 @@ void scanPlate (int table_num) {
 /*
  * billsEmpty()
  *
- * Checking if all the bills are payed for.
+ * Returns number of bills to be paid and adds target locations to
+ * an array
  *
  * @return true if all the bills in the restaurant have been paid
  */
@@ -450,14 +438,46 @@ bool billsEmpty() {
 	return true;
 }
 
+void billCollection(){
+	leaveKitchen();
+
+	turn(90);
+
+	for (int count = 1; count <= RESTAURANT_WIDTH; count++){
+		driveForward();
+		if (bill[count-1] > 0) {
+			turn(-90);
+			getPayment(count);
+			turn(90);
+		}
+		driveForward();
+	}
+
+	turn(-90);
+  driveForward();
+	turn(-90);
+
+	for (int count = 6; count >= 4; count--){
+		driveForward();
+		if (bill[count-1] > 0) {
+			turn(90);
+			getPayment(count);
+			turn(-90);
+		}
+		driveForward();
+	}
+
+	turn(-90);
+	driveForward();
+	driveForward();
+	turn(-90);
+	driveForward();
+}
 
 
 
 
 //*****************MAIN PROGRAM******************//
-//TODO:
-//Integrate bill collection system.
-
 task main(){
 	configureAllSensors();
 	bool in_use = true;
@@ -470,7 +490,7 @@ task main(){
 
 	while(in_use) {
 		clearScreen();
-		displayBigStringAt(0, 50, "Press enter:");
+		displayBigStringAt(15, 50, "Press enter:");
 
 		//wait for input
 		waitButton(buttonEnter);
@@ -504,33 +524,33 @@ task main(){
 			if (!completed_travel) {
 				turn(180);
 				driveHome(target);
+				if (deliver_food) {
+					wait1Msec(2000);
+					moveClaw(true);
+				}
 			}
-
-			//deliver food or bill
-			if (deliver_food) {
-				wait1Msec(2000);
-				moveClaw(true);
-			} else {
-				getPayment(table_num);
+			else {
+				//deliver food or bill
+				if (deliver_food) {
+					wait1Msec(2000);
+					moveClaw(true);
+					wait1Msec(3000);
+				} else {
+					getPayment(table_num);
+				}
+				turn(-90);
+				driveHome(target);
 			}
-			turn(-90);
-			driveHome(target);
 		}
 	}
 
 
 	//shut down procedure
 	if (!billsEmpty()) {
-		displayString(3, "PLEEEEEAAAAASE PAY YOUR BILLS"); //insert bill collection system here
-		// new idea:
-		// how about we just go from table to table, skipping if the table is in line
-
-		wait1Msec(2000);
-		//activate bill payment procedure
-	} else {
-		displayBigStringAt(0, 100, "THANK YOU FOR");
-		displayBigStringAt(0, 75, "USING");
-		displayBigStringAt(0, 50, "THE UWAITERLOO BOT");
-		wait1Msec(2000);
+		billCollection();
 	}
+	displayBigStringAt(0, 100, "THANK YOU FOR");
+	displayBigStringAt(0, 75, "USING");
+	displayBigStringAt(0, 50, "THE UWAITERLOO BOT");
+	wait1Msec(10000);
 }
